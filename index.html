@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studywise API Playground</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #0f3460;
+            --accent: #e94560;
+            --accent-secondary: #533483;
+            --text-primary: #eaeaea;
+            --text-secondary: #a0a0a0;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #ef4444;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--accent-secondary));
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 2px solid var(--accent);
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            color: var(--text-secondary);
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        
+        .tab.active {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .flow-diagram {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .flow-diagram h3 {
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+        
+        .flow-steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .flow-step {
+            background: var(--bg-card);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+        
+        .flow-arrow {
+            color: var(--accent);
+            font-size: 1.5rem;
+        }
+        
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .card h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .api-endpoint {
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-family: monospace;
+        }
+        
+        .api-endpoint .method {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .method.get { background: var(--success); color: #000; }
+        .method.post { background: var(--accent); color: #fff; }
+        .method.put { background: var(--warning); color: #000; }
+        
+        .code-block {
+            background: #0d0d0d;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            margin: 1rem 0;
+        }
+        
+        .flashcard {
+            perspective: 1000px;
+            width: 100%;
+            max-width: 500px;
+            height: 300px;
+            margin: 2rem auto;
+        }
+        
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            padding: 2rem;
+        }
+        
+        .flashcard-front {
+            background: linear-gradient(135deg, var(--bg-card), var(--accent-secondary));
+            border: 2px solid var(--accent);
+        }
+        
+        .flashcard-back {
+            background: linear-gradient(135deg, var(--accent-secondary), var(--bg-card));
+            transform: rotateY(180deg);
+            border: 2px solid var(--success);
+        }
+        
+        .flashcard-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .flashcard-content {
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        
+        .flashcard-image {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        
+        .click-hint {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .quality-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .quality-btn {
+            padding: 0.75rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quality-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .quality-btn.again { background: var(--error); color: white; }
+        .quality-btn.hard { background: var(--warning); color: #000; }
+        .quality-btn.good { background: #3b82f6; color: white; }
+        .quality-btn.easy { background: var(--success); color: #000; }
+        
+        .vocab-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+        
+        .vocab-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .vocab-item .concepta-id {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .concept-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .concept-status.found { background: var(--success); color: #000; }
+        .concept-status.missing { background: var(--error); color: white; }
+        
+        .response-log {
+            background: #0d0d0d;
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+        
+        .log-entry {
+            padding: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .log-entry:last-child { border-bottom: none; }
+        
+        .log-time { color: var(--text-secondary); margin-right: 0.5rem; }
+        .log-success { color: var(--success); }
+        .log-error { color: var(--error); }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔬 Studywise API Playground</h1>
+        <p>Interaktiv demo av Studywise läxa → flashcards → SRS-flödet</p>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="showPage('homework')">📚 Läxa → Flashcards</button>
+        <button class="tab" onclick="showPage('training')">🎯 Träning → SRS</button>
+    </div>
+    
+    <div class="container">
+        <!-- Page 1: Homework -->
+        <div id="homework" class="page active">
+            <div class="flow-diagram">
+                <h3>Flöde: Skapa läxa med flashcards</h3>
+                <div class="flow-steps">
+                    <div class="flow-step">Lärare skapar Homework</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">VocabularyItems med conceptaId</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Concepta API: hämta Entry</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Visa flashcards</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>📡 API-anrop: Skapa homework</h3>
+                <div class="api-endpoint">
+                    <span class="method post">POST</span> /api/v1/homework
+                </div>
+                <div class="code-block">{
+  "title": "Engelska glosor - Animals",
+  "dueDate": "2026-04-10",
+  "vocabularyItems": [
+    {
+      "conceptaId": "entry_001",
+      "learnableRef": "vocab_giraffe_01",
+      "quantity": 5
+    },
+    {
+      "conceptaId": "entry_002", 
+      "learnableRef": "vocab_elephant_01",
+      "quantity": 5
+    }
+  ]
+}</div>
+                <button class="quality-btn good" onclick="simulateHomeworkCreate()">▶️ Kör API-anrop</button>
+            </div>
+            
+            <div class="card">
+                <h3>🔍 Concepta: Sök efter glosor</h3>
+                <div class="api-endpoint">
+                    <span class="method get">GET</span> /api/concepta/entries/{id}
+                </div>
+                <div id="concepta-results"></div>
+            </div>
+            
+            <div class="card hidden" id="flashcard-preview">
+                <h3>🃏 Genererad Flashcard</h3>
+                <div class="flashcard" onclick="this.classList.toggle('flipped')">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front">
+                            <div class="flashcard-label">FRÅGA</div>
+                            <div class="flashcard-content" id="card-question">giraffe</div>
+                        </div>
+                        <div class="flashcard-back">
+                            <div class="flashcard-label">SVAR</div>
+                            <div class="flashcard-content" id="card-answer">en giraf</div>
+                            <img class="flashcard-image" id="card-image" src="" alt="">
+                        </div>
+                    </div>
+                </div>
+                <p class="click-hint">💡 Klicka på kortet för att vända</p>
+            </div>
+        </div>
+        
+        <!-- Page 2: Training -->
+        <div id="training" class="page">
+            <div class="flow-diagram">
+                <h3>Flöde: SRS-träning med Recall</h3>
+                <div class="flow-steps">
+                    <div class="flow-step">Hämta due items</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Visa flashcard</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Användaren svarar (0-5)</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Recall: nästa interva</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>📡 API-anrop: Hämta due items</h3>
+                <div class="api-endpoint">
+                    <span class="method get">GET</span> /api/v1/collections/{id}/due
+                </div>
+                <div class="code-block">// Response
+{
+  "collectionId": "col_001",
+  "dueItems": [
+    {
+      "cardId": "card_123",
+      "front": "giraffe",
+      "back": "en giraf",
+      "imageUrl": "https://concepta.io/images/giraffe.jpg",
+      "dueAt": "2026-04-03T10:00:00Z",
+      "interval": 4,
+      "easeFactor": 2.5
+    }
+  ],
+  "totalDue": 15,
+  "nextDueAt": "2026-04-04"
+}</div>
+                <button class="quality-btn good" onclick="loadDueItems()">▶️ Hämta due items</button>
+            </div>
+            
+            <div class="card hidden" id="training-card">
+                <h3>🎯 Träna: <span id="training-progress">1/15</span></h3>
+                <div class="flashcard" id="training-flashcard" onclick="flipTrainingCard()">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front">
+                            <div class="flashcard-label">KLICKA FÖR SVAR</div>
+                            <div class="flashcard-content" id="training-question">giraffe</div>
+                        </div>
+                        <div class="flashcard-back">
+                            <div class="flashcard-label">SVAR</div>
+                            <div class="flashcard-content" id="training-answer">en giraf</div>
+                            <img class="flashcard-image" id="training-image" src="" alt="">
+                        </div>
+                    </div>
+                </div>
+                <p class="click-hint">Klicka för att se svaret</p>
+                
+                <div class="quality-buttons hidden" id="quality-buttons">
+                    <p style="width: 100%; text-align: center; margin-bottom: 1rem;">Hur vet du svaret?</p>
+                    <button class="quality-btn again" onclick="submitQuality(0)">0 - helt fel</button>
+                    <button class="quality-btn hard" onclick="submitQuality(3)">3 - svårt</button>
+                    <button class="quality-btn good" onclick="submitQuality(4)">4 - bra</button>
+                    <button class="quality-btn easy" onclick="submitQuality(5)">5 - lätt!</button>
+                </div>
+            </div>
+            
+            <div class="card hidden" id="stats-card">
+                <h3>📊 Tränings-statistik</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-correct">0</div>
+                        <div class="stat-label">Rätt svar</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-accuracy">0%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-streak">0</div>
+                        <div class="stat-label">Streak</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-next">-</div>
+                        <div class="stat-label">Nästa review</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>📜 Response Log</h3>
+                <div class="response-log" id="response-log"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Mock data from Karlstadmodellen / Studywise research
+        const mockVocabItems = [
+            {
+                conceptaId: "entry_001",
+                learnableRef: "vocab_giraffe_01",
+                word: "giraffe",
+                translation: "en giraf",
+                image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Giraffe_Ile_Rothschild_Melina.jpg/440px-Giraffe_Ile_Rothschild_Melina.jpg",
+                form: "noun",
+                category: "animal"
+            },
+            {
+                conceptaId: "entry_002",
+                learnableRef: "vocab_elephant_01",
+                word: "elephant",
+                translation: "en elefant",
+                image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/African_Bush_Elephant.jpg/440px-African_Bush_Elephant.jpg",
+                form: "noun",
+                category: "animal"
+            },
+            {
+                conceptaId: "entry_003",
+                learnableRef: "vocab_dolphin_01",
+                word: "dolphin",
+                translation: "en delfin",
+                image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Common_dolphin.jpg/440px-Common_dolphin.jpg",
+                form: "noun",
+                category: "animal"
+            },
+            {
+                conceptaId: "entry_004",
+                learnableRef: "vocab_penguin_01",
+                word: "penguin",
+                translation: "en pingvin",
+                image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Aptenodytes_forsteri_-Snow_Hill_Station%2C_Antarctica-8.jpg/440px-Aptenodytes_forsteri_-Snow_Hill_Station%2C_Antarctica-8.jpg",
+                form: "noun",
+                category: "animal"
+            },
+            {
+                conceptaId: "entry_005",
+                learnableRef: "vocab_lion_01",
+                word: "lion",
+                translation: "ett lejon",
+                image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Lion_waiting_in_Namibia.jpg/440px-Lion_waiting_in_Namibia.jpg",
+                form: "noun",
+                category: "animal"
+            }
+        ];
+        
+        let dueItems = [];
+        let currentIndex = 0;
+        let stats = { correct: 0, total: 0, streak: 0 };
+        
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function log(message, type = 'info') {
+            const logEl = document.getElementById('response-log');
+            const time = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'log-success' : type === 'error' ? 'log-error' : '';
+            logEl.innerHTML = `<div class="log-entry"><span class="log-time">${time}</span><span class="${className}">${message}</span></div>` + logEl.innerHTML;
+        }
+        
+        function simulateHomeworkCreate() {
+            const resultsEl = document.getElementById('concepta-results');
+            resultsEl.innerHTML = '<p style="color: var(--text-secondary)">Söker i Concepta...</p>';
+            log('POST /api/v1/homework - Skapar homework');
+            
+            setTimeout(() => {
+                let html = '';
+                mockVocabItems.forEach(item => {
+                    html += `
+                        <div class="vocab-item">
+                            <img src="${item.image}" alt="${item.word}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23333%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 fill=%22%23999%22 text-anchor=%22middle%22 font-size=%2212%22>?</text></svg>'">
+                            <div>
+                                <strong>${item.word}</strong> → ${item.translation}
+                                <br>
+                                <span class="concepta-id">${item.conceptaId}</span>
+                                <span class="concept-status found">✓ Finns i Concepta</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                resultsEl.innerHTML = html;
+                log(`Hittade ${mockVocabItems.length} glosor i Concepta`, 'success');
+                
+                // Show flashcard preview
+                const preview = document.getElementById('flashcard-preview');
+                preview.classList.remove('hidden');
+                document.getElementById('card-question').textContent = mockVocabItems[0].word;
+                document.getElementById('card-answer').textContent = mockVocabItems[0].translation;
+                document.getElementById('card-image').src = mockVocabItems[0].image;
+            }, 500);
+        }
+        
+        function loadDueItems() {
+            dueItems = [...mockVocabItems].map((item, i) => ({
+                cardId: `card_${i + 100}`,
+                front: item.word,
+                back: item.translation,
+                imageUrl: item.image,
+                interval: Math.floor(Math.random() * 10) + 1,
+                easeFactor: 2.5 + Math.random() * 0.5
+            }));
+            
+            currentIndex = 0;
+            stats = { correct: 0, total: 0, streak: 0 };
+            
+            document.getElementById('stats-card').classList.add('hidden');
+            document.getElementById('training-card').classList.remove('hidden');
+            
+            showTrainingCard();
+            log(`Hämtade ${dueItems.length} due items från Recall API`, 'success');
+        }
+        
+        function showTrainingCard() {
+            if (currentIndex >= dueItems.length) {
+                showFinalStats();
+                return;
+            }
+            
+            const item = dueItems[currentIndex];
+            document.getElementById('training-progress').textContent = `${currentIndex + 1}/${dueItems.length}`;
+            document.getElementById('training-question').textContent = item.front;
+            document.getElementById('training-answer').textContent = item.back;
+            document.getElementById('training-image').src = item.imageUrl;
+            
+            const flashcard = document.getElementById('training-flashcard');
+            flashcard.classList.remove('flipped');
+            
+            document.getElementById('quality-buttons').classList.add('hidden');
+            
+            log(`Visar kort: ${item.front}`);
+        }
+        
+        function flipTrainingCard() {
+            const flashcard = document.getElementById('training-flashcard');
+            flashcard.classList.toggle('flipped');
+            
+            if (flashcard.classList.contains('flipped')) {
+                document.getElementById('quality-buttons').classList.remove('hidden');
+            }
+        }
+        
+        function submitQuality(quality) {
+            const item = dueItems[currentIndex];
+            const wasCorrect = quality >= 3;
+            
+            stats.total++;
+            if (wasCorrect) {
+                stats.correct++;
+                stats.streak++;
+            } else {
+                stats.streak = 0;
+            }
+            
+            // Calculate next interval (simplified SM-2)
+            const nextInterval = Math.round(item.interval * item.easeFactor * (1 + quality / 5));
+            
+            log(`Svar: ${quality} (${wasCorrect ? '✓' : '✗'}) - Nästa: om ${nextInterval} dagar`, wasCorrect ? 'success' : 'error');
+            
+            currentIndex++;
+            showTrainingCard();
+        }
+        
+        function showFinalStats() {
+            document.getElementById('training-card').classList.add('hidden');
+            document.getElementById('stats-card').classList.remove('hidden');
+            
+            const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+            const nextReview = new Date();
+            nextReview.setDate(nextReview.getDate() + Math.max(1, Math.round(stats.correct * 1.5)));
+            
+            document.getElementById('stat-correct').textContent = stats.correct;
+            document.getElementById('stat-accuracy').textContent = accuracy + '%';
+            document.getElementById('stat-streak').textContent = stats.streak;
+            document.getElementById('stat-next').textContent = nextReview.toLocaleDateString('sv-SE', { month: 'short', day: 'numeric' });
+            
+            log(`Träning klar! Accuracy: ${accuracy}%`, 'success');
+        }
+    </script>
+</body>
+</html>
